@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Go1dsta1ker 黑漆媽屋</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* 單欄長文，左側階段進度＝0→100 的刻度；數字一律等寬字 */
+:root{
+  --bg:#f7f5ef; --surface:#fffdf7; --ink:#1d1b16; --muted:#6b6455;
+  --line:#e2dccb; --gold:#a8790f; --gold-soft:#f3e6c2; --up:#1f8a5b; --down:#c2413a;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15130f; --surface:#1e1b15; --ink:#f0ebdd; --muted:#a59d8a;
+  --line:#353024; --gold:#e0b44a; --gold-soft:#3a2f14; --up:#4cc38a; --down:#f07167; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15130f; --surface:#1e1b15; --ink:#f0ebdd; --muted:#a59d8a;
+  --line:#353024; --gold:#e0b44a; --gold-soft:#3a2f14; --up:#4cc38a; --down:#f07167; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:860px;margin:0 auto;padding-block:40px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.3;margin:0}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:var(--gold)}
+
+header.hero{padding-block:24px 32px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.hero h1{font-size:clamp(36px,7vw,60px);font-weight:900;margin-top:8px}
+.hero h1 .arrow{color:var(--gold)}
+.hero p{color:var(--muted);margin:8px 0 0}
+
+nav.map{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);
+  border-bottom:1px solid var(--line);padding-block:10px;display:flex;gap:6px;overflow-x:auto}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.map a{flex:0 0 auto;text-decoration:none;color:var(--muted);font-size:13px;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+nav.map a b{font-family:var(--mono);font-weight:600;color:var(--gold);margin-right:4px}
+nav.map a:hover,nav.map a:focus-visible{color:var(--ink);border-color:var(--gold);outline:none}
+
+section.stage{padding-top:48px;scroll-margin-top:56px}
+.stage-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.stage-head .range{font-family:var(--mono);font-size:14px;color:var(--gold);font-weight:600}
+.stage-head h2{font-size:clamp(24px,4vw,32px)}
+.bar{height:4px;background:var(--line);border-radius:2px;margin-bottom:24px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold)}
+
+.topic{margin-top:28px}
+.topic h3{font-size:20px;margin-bottom:10px}
+.topic p{margin:6px 0}
+.note{color:var(--muted);font-size:14px}
+.key{background:var(--gold-soft);border-radius:6px;padding:12px 16px;margin-top:12px;font-weight:500}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
+.grid > div{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:14px 16px;min-width:0}
+.grid b{display:block;margin-bottom:2px}
+.grid span{color:var(--muted);font-size:14px}
+
+.tbl{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:460px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--muted);font-weight:500}
+td.num,th.num{text-align:right}
+.up{color:var(--up);font-weight:600}.down{color:var(--down);font-weight:600}
+
+.formula{font-family:var(--display);font-size:clamp(18px,3vw,22px);text-align:center;padding:16px;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:12px}
+.big{font-family:var(--mono);font-size:clamp(26px,5vw,36px);font-weight:600;color:var(--gold);line-height:1.2}
+
+/* 計算機 */
+.calc{border:1px solid var(--gold);border-radius:10px;padding:18px;margin-top:14px;background:var(--surface)}
+.calc .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.calc label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
+.calc input{width:100%;font:inherit;font-family:var(--mono);padding:8px 10px;border:1px solid var(--line);
+  border-radius:6px;background:var(--bg);color:var(--ink)}
+.calc input:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.calc .out{display:flex;flex-wrap:wrap;gap:24px;margin-top:16px;align-items:baseline}
+.calc .out div span{display:block;font-size:13px;color:var(--muted)}
+
+ol.steps{list-style:none;padding:0;margin:12px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;counter-reset:s}
+ol.steps li{counter-increment:s;border-top:2px solid var(--gold);padding-top:8px}
+ol.steps li::before{content:counter(s,decimal-leading-zero);font-family:var(--mono);color:var(--gold);font-size:13px;display:block}
+
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+footer .q{font-family:var(--display);font-size:22px;color:var(--ink);margin-bottom:12px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">Go1dsta1ker 黑漆媽屋 · XAUUSD</div>
+  <h1>黃金 CFD 0<span class="arrow">→</span>100</h1>
+  <p>從零開始的黃金差價合約完整教學，五個階段由淺入深，每一階段都建立在前一階段之上，不要跳級。</p>
+</header>
+
+<nav class="map" aria-label="課程地圖">
+  <a href="#s1"><b>0→20</b>認識黃金</a>
+  <a href="#s2"><b>20→40</b>合約與槓桿</a>
+  <a href="#s3"><b>40→60</b>價格驅動</a>
+  <a href="#s4"><b>60→80</b>讀圖</a>
+  <a href="#s5"><b>80→100</b>風險與倉位</a>
+  <a href="#next"><b>→</b>下一步</a>
+</nav>
+
+<!-- STAGE 1 -->
+<section class="stage" id="s1">
+  <div class="stage-head"><span class="range">0→20</span><h2>認識黃金</h2></div>
+  <div class="bar"><i style="width:20%"></i></div>
+
+  <div class="topic">
+    <h3>為什麼交易黃金</h3>
+    <div class="grid">
+      <div><b>避險資產</b><span>金融危機、地緣衝突時，資金常湧入黃金避險。</span></div>
+      <div><b>不是任何人的負債</b><span>黃金沒有發行人，不會因公司或政府違約而歸零。</span></div>
+      <div><b>流動性高、近 24 小時交易</b><span>亞洲、歐洲、美國時段接力，高流動性支撐各式價格分析。</span></div>
+      <div><b>總體經濟的溫度計</b><span>利率、美元、通膨預期，都會反映在金價上。</span></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <h3>金價怎麼報價</h3>
+    <p>2026 年 10 月中旬國際金價約 <span class="big">$4,100–4,200</span> 美元／金衡盎司</p>
+    <div class="tbl"><table>
+      <tr><th>項目</th><th>說明</th></tr>
+      <tr><td>報價單位</td><td>美元／金衡盎司（troy oz）</td></tr>
+      <tr><td>重量換算</td><td class="mono">1 金衡盎司 ≈ 31.1035 克</td></tr>
+      <tr><td>現貨代號</td><td class="mono">XAU/USD</td></tr>
+      <tr><td>CFD 商品代號</td><td class="mono">XAUUSD（券商可能加後綴）</td></tr>
+      <tr><td>本課程的「點」</td><td>每盎司價格變動 <span class="mono">$1</span></td></tr>
+    </table></div>
+  </div>
+
+  <div class="topic">
+    <h3>CFD 是什麼</h3>
+    <div class="grid">
+      <div><b>差價合約</b><span>你和券商約定，只結算金價的漲跌差價，不持有實體黃金。</span></div>
+      <div><b>保證金交易</b><span>只付部位價值的一小部分，就能控制整個部位，這就是槓桿。</span></div>
+      <div><b>隨時平倉</b><span>沒有到期日；持倉過夜會收取或支付隔夜利息。</span></div>
+    </div>
+    <div class="grid">
+      <div><b class="up">做多 Buy</b><span>預期上漲：先買進，之後賣出平倉。</span></div>
+      <div><b class="down">做空 Sell</b><span>預期下跌：先賣出，之後買回平倉。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- STAGE 2 -->
+<section class="stage" id="s2">
+  <div class="stage-head"><span class="range">20→40</span><h2>合約與槓桿</h2></div>
+  <div class="bar"><i style="width:40%"></i></div>
+
+  <div class="topic">
+    <h3>交易黃金的三種方式</h3>
+    <div class="tbl"><table>
+      <tr><th>項目</th><th>實體／現貨黃金</th><th>黃金期貨</th><th>黃金 CFD</th></tr>
+      <tr><td>交易場所</td><td>銀樓、銀行</td><td>交易所集中撮合</td><td>券商自行報價</td></tr>
+      <tr><td>槓桿</td><td>無</td><td>有（保證金交易）</td><td>有（通常更高）</td></tr>
+      <tr><td>到期</td><td>無</td><td>有，留倉需轉倉</td><td>無，但有隔夜利息</td></tr>
+      <tr><td>對手風險</td><td>低</td><td>交易所結算</td><td>取決於券商</td></tr>
+      <tr><td>適合</td><td>長期儲值</td><td>主動交易、避險</td><td>主動交易，部位可調得很小</td></tr>
+    </table></div>
+    <p class="key">本課程聚焦黃金 CFD（XAUUSD）：門檻低、彈性高，但券商選擇更關鍵。</p>
+  </div>
+
+  <div class="topic">
+    <h3>交易單位：手數</h3>
+    <div class="tbl"><table>
+      <tr><th>XAUUSD</th><th class="num">1 標準手</th><th class="num">0.1 手</th><th class="num">0.01 手</th></tr>
+      <tr><td>黃金數量</td><td class="num">100 盎司</td><td class="num">10 盎司</td><td class="num">1 盎司</td></tr>
+      <tr><td>金價動 $1</td><td class="num">$100</td><td class="num">$10</td><td class="num">$1</td></tr>
+      <tr><td>金價動 $0.01</td><td class="num">$1</td><td class="num">$0.10</td><td class="num">$0.01</td></tr>
+      <tr><td>適合</td><td class="num">資金充足的熟手</td><td class="num">有經驗的小帳戶</td><td class="num">新手練習</td></tr>
+    </table></div>
+    <p class="note">多數券商可下 0.01 手，新手可以用很小的部位練習完整流程。1 標準手 = 100 盎司，實際以券商合約規格為準。</p>
+  </div>
+
+  <div class="topic">
+    <h3>損益怎麼算</h3>
+    <div class="formula">損益 ＝ 價格變動（點）× 100 盎司 × 手數</div>
+    <div class="grid">
+      <div><b>範例 A｜0.1 手</b><span class="mono">4,150 買進 → 4,165 賣出<br>15 點 × 100 × 0.1</span><div class="big up">+$150</div></div>
+      <div><b>範例 B｜1 標準手</b><span class="mono">4,150 買進 → 4,165 賣出<br>15 點 × 100 × 1</span><div class="big up">+$1,500</div></div>
+    </div>
+    <p class="note">實際損益還要扣掉點差；反方向就是 −$150 與 −$1,500。手數決定輸贏幅度。</p>
+  </div>
+
+  <div class="topic">
+    <h3>槓桿：1 標準手有多大</h3>
+    <div class="grid">
+      <div><span>1 標準手的部位價值（$4,150 × 100 盎司）</span><div class="big">$415,000</div></div>
+      <div><span>以 1000x 槓桿示範，所需保證金</span><div class="big">$415</div></div>
+    </div>
+    <p class="key">槓桿放大的是結果，不是能力。</p>
+    <p class="note">1000x 僅為示範；可用槓桿依券商與監管地區而定，帳戶淨值低於維持比例會被強制平倉。</p>
+  </div>
+
+  <div class="topic">
+    <h3>交易時段（台灣時間）</h3>
+    <div class="tbl"><table>
+      <tr><th>項目</th><th>美國夏令時間</th><th>美國冬令時間</th></tr>
+      <tr><td>每日開盤</td><td class="mono">06:00</td><td class="mono">07:00</td></tr>
+      <tr><td>每日休市</td><td class="mono">05:00–06:00</td><td class="mono">06:00–07:00</td></tr>
+      <tr><td>每週開市／收市</td><td class="mono">週一 06:00／週六 05:00</td><td class="mono">週一 07:00／週六 06:00</td></tr>
+      <tr><td>美國經濟數據</td><td class="mono">多在 20:30</td><td class="mono">多在 21:30</td></tr>
+      <tr><td>FOMC 利率聲明</td><td class="mono">02:00</td><td class="mono">03:00</td></tr>
+    </table></div>
+    <p class="note">2026 年美國自 11 月 1 日起改冬令時間，所有時段延後 1 小時。實際以券商公告為準。</p>
+  </div>
+
+  <div class="topic">
+    <h3>交易成本與券商選擇</h3>
+    <div class="grid">
+      <div><b>Spread 點差</b><span>買價與賣價的差距，一進場就先付出。重大數據公布時常會擴大。</span></div>
+      <div><b>Swap 隔夜利息</b><span>持倉過夜會收取或支付利息，部分券商週三收三倍。日內平倉就不用付。</span></div>
+    </div>
+    <p style="margin-top:14px"><b>選券商先看四件事</b></p>
+    <div class="grid">
+      <div><b>監管牌照</b><span>受哪個地區的金融監管</span></div>
+      <div><b>點差與手續費</b><span>XAUUSD 的實際成本</span></div>
+      <div><b>報價與滑價</b><span>急行情時能否正常成交</span></div>
+      <div><b>出入金</b><span>管道、速度與費用</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- STAGE 3 -->
+<section class="stage" id="s3">
+  <div class="stage-head"><span class="range">40→60</span><h2>價格驅動</h2></div>
+  <div class="bar"><i style="width:60%"></i></div>
+
+  <div class="topic">
+    <h3>是什麼在推動金價</h3>
+    <div class="tbl"><table>
+      <tr><th>驅動因子</th><th>通常影響</th><th>為什麼</th></tr>
+      <tr><td>實質利率上升</td><td class="down">偏空 ↓</td><td>黃金不生利息，持有的機會成本變高</td></tr>
+      <tr><td>美元走強</td><td class="down">偏空 ↓</td><td>金價以美元計價，其他貨幣買金變貴</td></tr>
+      <tr><td>避險情緒升溫</td><td class="up">偏多 ↑</td><td>戰爭、金融風暴時資金尋找避風港</td></tr>
+      <tr><td>央行購金</td><td class="up">偏多 ↑</td><td>分散外匯存底，形成長期買盤</td></tr>
+      <tr><td>通膨預期上升</td><td class="up">偏多 ↑</td><td>被視為對抗購買力下降的工具</td></tr>
+    </table></div>
+    <p class="key">「通常」不等於「必然」。關係會隨市場階段改變，價格本身才是最後的答案。</p>
+  </div>
+
+  <div class="topic">
+    <h3>必看的經濟日曆</h3>
+    <div class="tbl"><table>
+      <tr><th>數據</th><th>名稱</th><th>公布時間（夏令）</th></tr>
+      <tr><td class="mono">CPI</td><td>消費者物價指數</td><td class="mono">每月中旬｜20:30</td></tr>
+      <tr><td class="mono">PPI</td><td>生產者物價指數</td><td class="mono">每月中旬｜20:30</td></tr>
+      <tr><td class="mono">PCE</td><td>個人消費支出物價</td><td class="mono">每月月底｜20:30</td></tr>
+      <tr><td class="mono">ADP</td><td>ADP 小非農就業</td><td class="mono">NFP 前的週三｜20:15</td></tr>
+      <tr><td class="mono">NFP</td><td>非農就業</td><td class="mono">每月第一個週五｜20:30</td></tr>
+      <tr><td class="mono">PMI</td><td>ISM 採購經理人指數</td><td class="mono">每月初｜22:00</td></tr>
+      <tr><td class="mono">GDP</td><td>國內生產毛額</td><td class="mono">每季公布｜20:30</td></tr>
+      <tr><td class="mono">FOMC</td><td>聯準會利率決議</td><td class="mono">每年 8 次｜02:00</td></tr>
+    </table></div>
+    <p class="key">新手建議：數據公布前後不開新倉，點差與滑價可能瞬間擴大。</p>
+    <p class="note">以上為台灣夏令時間；2026 年 11 月 1 日起改冬令，各延後 1 小時。</p>
+  </div>
+</section>
+
+<!-- STAGE 4 -->
+<section class="stage" id="s4">
+  <div class="stage-head"><span class="range">60→80</span><h2>讀圖</h2></div>
+  <div class="bar"><i style="width:80%"></i></div>
+  <p class="note">讀懂市場，才有辦法活下來。</p>
+
+  <div class="topic">
+    <h3>看懂一根 K 棒</h3>
+    <div class="grid">
+      <div><b>實體</b><span>開盤與收盤之間</span></div>
+      <div><b>影線</b><span>最高、最低價觸及的範圍</span></div>
+      <div><b class="up">綠 K</b><span>收盤 ＞ 開盤，上漲</span></div>
+      <div><b class="down">紅 K</b><span>收盤 ＜ 開盤，下跌</span></div>
+    </div>
+    <p class="key">注意顏色：台股習慣「紅漲綠跌」；國際市場與本課程一律「綠漲紅跌」。</p>
+  </div>
+
+  <div class="topic">
+    <h3>SNR 支撐壓力：主要策略</h3>
+    <div class="grid">
+      <div><b>SNR 是一種價格共識</b><span>壓力被突破後常轉為支撐，反之亦然。</span></div>
+      <div><b>SNR 區角色共存</b><span>有效的壓力通常會是有效的支撐。</span></div>
+      <div><b>有效水平</b><span>透過後續價格行為觀察水平效力。</span></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <h3>市場結構：趨勢的骨架</h3>
+    <div class="grid">
+      <div><b>上升結構</b><span>更高的高點 HH＋更高的低點 HL</span></div>
+      <div><b>BOS 結構突破</b><span>順勢突破前高（或前低），趨勢延續</span></div>
+      <div><b>CHoCH 性質轉變</b><span>跌破最後一個 HL，上升結構被破壞，留意反轉</span></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <h3>FVG 公允價值缺口</h3>
+    <div class="grid">
+      <div><b>定義</b><span>三根同向 K 棒中，第一根高點與第三根低點之間沒被重疊的空間。</span></div>
+      <div><b>意義</b><span>代表單邊快速移動、買賣失衡，價格常回來測試。</span></div>
+      <div><b>空方 FVG</b><span>三根同向下跌 K 棒，第一根低點與第三根高點之間的空白。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- STAGE 5 -->
+<section class="stage" id="s5">
+  <div class="stage-head"><span class="range">80→100</span><h2>風險控管與倉位管理</h2></div>
+  <div class="bar"><i style="width:100%"></i></div>
+  <p class="note">決定你能在市場待多久的，除了勝率，還有剩下多少子彈。</p>
+
+  <div class="topic">
+    <h3>期望值：勝率 × 盈虧比</h3>
+    <div class="formula">期望值 ＝ 勝率 × 平均獲利 − 敗率 × 平均虧損</div>
+    <div class="grid">
+      <div><b>範例｜勝率 40%、盈虧比 2R</b><span class="mono">每筆風險 $100，目標 $200<br>0.4 × $200 − 0.6 × $100</span><div class="big up">+$20／筆</div><span>執行 100 筆，期望約 +$2,000</span></div>
+      <div><b>損益兩平需要的勝率</b>
+        <div class="tbl" style="margin-top:4px"><table style="min-width:0">
+          <tr><th>盈虧比 (R)</th><th class="num">最低勝率</th></tr>
+          <tr><td class="mono">1R</td><td class="num">50%</td></tr>
+          <tr><td class="mono">1.5R</td><td class="num">40%</td></tr>
+          <tr><td class="mono">2R</td><td class="num">33%</td></tr>
+          <tr><td class="mono">3R</td><td class="num">25%</td></tr>
+        </table></div>
+      </div>
+    </div>
+    <p class="key">勝率低不可怕，盈虧比撐不起勝率才可怕。（未計點差）</p>
+  </div>
+
+  <div class="topic">
+    <h3>部位大小：要下幾手</h3>
+    <div class="formula">風險 ＝ 止損點數 × $100 × 手數</div>
+    <p>範例：固定止損 3 點 → 每 1 手風險 3 × $100 = $300；帳戶 $10,000 × 1% = $100；$100 ÷ $300 ≈ <b class="mono">0.33 手</b>。</p>
+    <p class="note">對照：0.1 手 = 風險 $30｜0.5 手 = $150｜1 手 = $300</p>
+
+    <form class="calc" id="calc" aria-label="部位大小計算機">
+      <b>自己算算看</b>
+      <div class="fields" style="margin-top:10px">
+        <div><label for="acct">帳戶金額（USD）</label><input id="acct" type="number" min="0" step="100" value="10000" inputmode="decimal"></div>
+        <div><label for="riskpct">單筆風險（%）</label><input id="riskpct" type="number" min="0" step="0.1" value="1" inputmode="decimal"></div>
+        <div><label for="stop">止損點數</label><input id="stop" type="number" min="0" step="0.1" value="3" inputmode="decimal"></div>
+      </div>
+      <div class="out">
+        <div><span>可承受風險</span><b class="big" id="o-risk">$100</b></div>
+        <div><span>每 1 手風險</span><b class="big" id="o-perlot">$300</b></div>
+        <div><span>建議手數（無條件捨去）</span><b class="big" id="o-lots">0.33 手</b></div>
+      </div>
+    </form>
+    <p class="key">先決定停損在哪裡，再決定下幾手，順序不能反。</p>
+  </div>
+
+  <div class="topic">
+    <h3>倉位管理</h3>
+    <div class="formula">帳戶金額 ＝ 單筆風險 × 交易筆數 ＋ 緩衝資金</div>
+    <p>範例：單筆風險 $100 × 規劃 50 筆 ＋ 緩衝 $1,000 ＝ 應準備 <b class="mono">$6,000</b></p>
+    <div class="grid">
+      <div><b>目的</b><span>即使前面連續止損，第 50 筆依舊能照策略打出，讓期望值有機會兌現。</span></div>
+      <div><b>槓桿的角色</b><span>設好止損後，槓桿放大的是資金利用率；但手數仍要照倉位管理決定。</span></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <h3>四條交易鐵律</h3>
+    <ol class="steps">
+      <li><b>了解風險</b><br><span class="note">下單前先知道這筆最多虧多少；槓桿、點差、數據行情都算進去，承受得起才進場。</span></li>
+      <li><b>設定止損</b><br><span class="note">每筆進場就設好止損，位置由結構決定。不因虧損拉遠止損，也絕不攤平。</span></li>
+      <li><b>實現策略期望值</b><br><span class="note">單筆輸贏不重要。每次都照同一套規則執行，期望值才會在大量交易中兌現。</span></li>
+      <li><b>覆盤</b><br><span class="note">每筆交易都記錄、檢討。檢查的不是賺賠，而是有沒有照規則執行。</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- NEXT -->
+<section class="stage" id="next">
+  <div class="stage-head"><span class="range">NEXT</span><h2>新手的上路順序</h2></div>
+  <ol class="steps">
+    <li><b>不斷重複學習</b><br><span class="note">覆盤、學習，再覆盤。</span></li>
+    <li><b>小手數實單</b><br><span class="note">從低風險開始，接觸交易。</span></li>
+    <li><b>交易日誌</b><br><span class="note">記錄每筆的條件、結果，以及有沒有守紀律。</span></li>
+    <li><b>逐步放大</b><br><span class="note">規則能穩定執行後，才逐步增加手數。</span></li>
+  </ol>
+  <p class="key">評估一個框架，看的是一百筆，不是一筆。</p>
+</section>
+
+<footer>
+  <div class="q">下單之前，先問自己：條件都成立了嗎？</div>
+  <p>內容整理自 Go1dsta1ker《黃金 CFD 0→100》課程簡報（2026.10）。僅供教學用途，不構成任何投資建議。CFD 交易具高度槓桿，可能在短時間內損失全部保證金，請審慎評估自身風險承受能力並慎選受監管的券商。</p>
+</footer>
+</div>
+
+<script>
+(function(){
+  var f=document.getElementById('calc');
+  var money=function(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:2})};
+  function run(){
+    var a=parseFloat(f.acct.value)||0, p=parseFloat(f.riskpct.value)||0, s=parseFloat(f.stop.value)||0;
+    var risk=a*p/100, perLot=s*100;
+    var lots=perLot>0?Math.floor(risk/perLot*100)/100:0;
+    document.getElementById('o-risk').textContent=money(risk);
+    document.getElementById('o-perlot').textContent=money(perLot);
+    document.getElementById('o-lots').textContent=lots.toFixed(2)+' 手';
+  }
+  f.addEventListener('input',run);
+  f.addEventListener('submit',function(e){e.preventDefault()});
+  run();
+})();
+</script>
